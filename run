@@ -1,0 +1,269 @@
+% Read CSV dataset
+data = readtable('Final data ver3.csv');
+sales2016 = data{:, 2}';  
+sales2017 = data{:, 3}';
+
+% Combine into single time series
+salesData = [sales2016, sales2017]; 
+
+% Handle missing values (fill with mean)
+salesData(isnan(salesData)) = mean(salesData, 'omitnan');
+
+% Normalize data to [0,1] range
+salesDataNorm = (salesData - min(salesData)) / (max(salesData) - min(salesData));
+
+%% === 2. Generate Synthetic Weather Data ===
+rng(42); % Fixed random seed
+numDays = length(salesData);
+
+% Generate weather parameters
+temperature = 15 + 10 * randn(1, numDays); 
+rainfall = max(0, 5 * randn(1, numDays));  
+humidity = 50 + 20 * randn(1, numDays);    
+
+% Normalize weather data
+temperatureNorm = (temperature - min(temperature)) / (max(temperature) - min(temperature));
+rainfallNorm = (rainfall - min(rainfall)) / (max(rainfall) - min(rainfall));
+humidityNorm = (humidity - min(humidity)) / (max(humidity) - min(humidity));
+
+%% === 3. Build Input-Output Dataset ===
+D = 3; % Time lag parameter
+numSamples = length(salesDataNorm);
+
+% Initialize input/output matrices
+inputData = zeros(numSamples - D, D + 2); 
+outputData = zeros(numSamples - D, 1);    
+
+% Create training samples
+for t = D:numSamples-1
+    inputData(t-D+1, 1:D) = salesDataNorm(t-D+1:t); 
+    inputData(t-D+1, D+1) = temperatureNorm(t); 
+    inputData(t-D+1, D+2) = humidityNorm(t);    
+    outputData(t-D+1) = salesDataNorm(t+1); 
+end
+
+% Split dataset
+trainRatio = 0.5; 
+trainSize = round(trainRatio * size(inputData, 1));
+
+trnX = inputData(1:trainSize, :);    
+trnY = outputData(1:trainSize, :);   
+vldX = inputData(trainSize+1:end, :);
+vldY = outputData(trainSize+1:end, :);
+
+%% === 4. Initialize FIS ===
+inputRange = [0 1];   
+outputRange = [0 1];  
+fisin = sugfistype2;  
+
+% Configure input structure
+numInputs = D+2;      
+numInputMFs = 2;      
+for i = 1:numInputs
+     fisin = addInput(fisin, inputRange, 'NumMFs', numInputMFs);
+    for j = 1:numInputMFs
+        fisin.Inputs(i).MembershipFunctions(j).LowerScale = 1; 
+        fisin.Inputs(i).MembershipFunctions(j).LowerLag = 0;   
+    end
+end
+
+% Semantic naming
+fisin.Inputs(1).Name = 'Lag1_Sales';  
+fisin.Inputs(2).Name = 'Lag2_Sales';  
+fisin.Inputs(3).Name = 'Lag3_Sales'; 
+fisin.Inputs(4).Name = 'Temperature'; 
+fisin.Inputs(5).Name = 'Humidity';    
+
+% Configure output
+numOutputMFs = numInputMFs^numInputs; 
+fisin = addOutput(fisin, outputRange, 'NumMFs', numOutputMFs);
+
+%% === 5. Stage 1: Rule Learning ===
+options = tunefisOptions;
+options.Method = 'ga';               
+options.OptimizationType = 'learning';
+options.NumMaxRules = numInputMFs^numInputs; 
+options.MethodOptions.PopulationSize = 100;  
+options.MethodOptions.CrossoverFraction = 0.8;
+options.MethodOptions.MaxGenerations = 300; 
+options.UseParallel = true;          
+
+rng('default')          
+runtunefis = true;      
+
+if runtunefis
+    fisout1 = tunefis(fisin, [], trnX, trnY, options);
+end
+
+%% === 6. Stage 2: Parameter Tuning ===
+[in,out] = getTunableSettings(fisout1,'AsymmetricLag',true);
+
+% Lock parameters
+for i = 1:length(in)
+    for j = 1:length(in(i).MembershipFunctions)
+        in(i).MembershipFunctions(j).LowerScale.Free = false; 
+        in(i).MembershipFunctions(j).LowerLag.Free = false;   
+    end
+end
+
+options.OptimizationType = 'tuning'; 
+
+rng('default') 
+if runtunefis
+    fisout2 = tunefis(fisout1,[in;out], trnX, trnY, options);
+end
+
+%% === 7. Stage 3: Advanced Tuning ===
+for i = 1:length(in)
+    for j = 1:length(in(i).MembershipFunctions)
+        in(i).MembershipFunctions(j).UpperParameters.Free = false; 
+        in(i).MembershipFunctions(j).LowerScale.Free = true;  
+        in(i).MembershipFunctions(j).LowerLag.Free = true;    
+    end
+end
+
+rng('default') 
+if runtunefis
+    fisout3 = tunefis(fisout2, in, trnX, trnY, options);
+end
+
+fisout3.Rules = [fisout3.Rules, fisin.Rules];
+fisout3 = autoNameOutputMFs(fisout3);
+
+%% === 8. Rule Analysis ===
+printFuzzyRules(fisout3)
+
+%% Helper Functions
+
+function [rmse,actY] = calculateRMSE(fis,x,y)
+% Calculate RMSE
+evalOptions = evalfisOptions("EmptyOutputFuzzySetMessage","none",...
+        "NoRuleFiredMessage","none","OutOfRangeInputValueMessage","none");
+
+actY = evalfis(fis, x, evalOptions);
+del = actY - y;
+rmse = sqrt(mean(del.^2));
+end
+
+function plotActualAndExpectedResultsWithMetrics(fis, vldX, vldY)
+    [rmse, actY] = calculateRMSE(fis, vldX, vldY);
+    [mae, ~] = calculateMAE(fis, vldX, vldY);
+
+    figure
+    plot([actY vldY])
+    axis([0 length(vldY) min(vldY)-0.01 max(vldY)+0.13])
+    xlabel('Sample Index')
+    ylabel('Signal Value')
+    title(['RMSE = ' num2str(rmse) ', MAE = ' num2str(mae)])
+    legend(["Actual Output" "Expected Output"], 'Location', "northeast")
+end
+
+function [mae, actY] = calculateMAE(fis, x, y)
+% Calculate MAE
+evalOptions = evalfisOptions("EmptyOutputFuzzySetMessage", "none",...
+        "NoRuleFiredMessage", "none", "OutOfRangeInputValueMessage", "none");
+
+actY = evalfis(fis, x, evalOptions);
+mae = mean(abs(actY - y));
+end
+
+function plotRuleActivation(fis, data)
+% Visualize rule activation intensities
+N = size(data,1);                    
+NR = numel(fis.Rules);               
+combinedFiring = zeros(N, NR);       
+
+for k = 1:N                         
+    [~, ~, ~, ruleFiring] = evalfis(fis, data(k,:));
+    combinedFiring(k,:) = sqrt(ruleFiring(:,1) .* ruleFiring(:,2)); 
+end
+
+figure;
+h = heatmap(combinedFiring, 'Colormap', parula);
+xlabel('Rule Index');
+ylabel('Sample Index');
+title('Rule Activation Intensity Map');
+end
+
+function printFuzzyRules(fis)
+% Print human-readable rule list
+inputNames = {fis.Inputs.Name};  
+outputName = fis.Outputs(1).Name; 
+
+for i = 1:length(fis.Rules)
+    rule = fis.Rules(i); 
+    antecedents = parseAntecedent(rule.Antecedent, inputNames, fis);
+    consequentMF = fis.Outputs(1).MembershipFunctions(rule.Consequent).Name;
+    
+    fprintf('Rule %2d: IF %s \n     THEN %s is %s (Weight=%.1f)\n\n',...
+            i, antecedents, outputName, consequentMF, rule.Weight);
+end
+end
+
+function str = parseAntecedent(antecedent, inputNames, fis)
+% Convert antecedent to natural language
+parts = {}; 
+for j = 1:length(antecedent)
+    if antecedent(j) == 0
+        continue; 
+    end
+    
+    inputVar = inputNames{j};
+    mfIndex = antecedent(j);
+    mfName = fis.Inputs(j).MembershipFunctions(mfIndex).Name;
+    parts{end+1} = sprintf('%s is %s', inputVar, mfName);
+end
+str = strjoin(parts, ' AND ');
+end
+
+function fis = autoNameOutputMFs(fis)
+% Automatically name output membership functions
+outputGroups = {
+    [0.0, 0.2],   'Critical_Low';
+    [0.2, 0.4],   'Low';
+    [0.4, 0.6],   'Medium';
+    [0.6, 0.8],   'High';
+    [0.8, 1.0],   'Peak'
+};
+
+outputMFs = fis.Outputs(1).MembershipFunctions;
+centers = zeros(1, length(outputMFs));
+for i = 1:length(outputMFs)
+    params = outputMFs(i).Parameters;
+    switch outputMFs(i).Type
+        case 'trimf'
+            centers(i) = params(2);
+        case 'gaussmf'
+            centers(i) = params(1);
+        case 'trapmf'
+            centers(i) = mean(params(2:3));
+        case 'constant'
+            centers(i) = params(1);
+    end
+end
+
+nameCounter = containers.Map; 
+for i = 1:length(outputMFs)
+    groupName = '';
+    for g = 1:size(outputGroups,1)
+        if centers(i) >= outputGroups{g,1}(1) && centers(i) <= outputGroups{g,1}(2)
+            groupName = outputGroups{g,2};
+            break;
+        end
+    end
+    
+    if isempty(groupName)
+        groupName = 'Unknown';
+    end
+    
+    if ~isKey(nameCounter, groupName)
+        nameCounter(groupName) = 1;
+        newName = groupName;
+    else
+        nameCounter(groupName) = nameCounter(groupName) + 1;
+        newName = sprintf('%s_%d', groupName, nameCounter(groupName));
+    end
+    
+    fis.Outputs(1).MembershipFunctions(i).Name = newName;
+end
+end
