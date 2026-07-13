@@ -1,0 +1,21 @@
+site_name: EFS-forecasting / AdaptForecast
+site_url: https://wublinux.github.io/EFS-forecasting/
+repo_url: https://github.com/wublinux/EFS-forecasting
+repo_name: wublinux/EFS-forecasting
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+nav:
+  - Home: index.md
+  - Methodology: methodology.md
+  - Reproducibility: reproducibility.md
+  - Thesis alignment: thesis-alignment.md
+  - Limitations: limitations.md
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+

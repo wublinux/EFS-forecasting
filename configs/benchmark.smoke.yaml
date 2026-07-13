@@ -1,0 +1,20 @@
+data_path: data/sample/synthetic_demand.csv
+artifact_root: artifacts
+train_year: 2016
+test_year: 2017
+lags: [1, 2, 3]
+weather_features: [avg_temp, humidity, rainfall]
+categories: [ice cream]
+seeds: [42]
+models: [seasonal_naive, arima, lstm, efs]
+seasonal_period: 7
+profile: smoke
+efs:
+  executable: matlab
+  num_input_mfs: 2
+  population_size: 10
+  max_generations: 2
+  crossover_fraction: 0.8
+  pattern_max_iterations: 5
+  use_parallel: false
+

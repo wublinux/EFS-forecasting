@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+dist/
+build/
+.env
+.DS_Store
+
+# MATLAB outputs
+*.asv
+*.m~
+*.mat
+*.fig
+*.log
+
+# Private data and generated experiment outputs
+data/private/
+private-data/
+artifacts/*
+!artifacts/.gitkeep
+site/
+RPT_*.pdf
+
