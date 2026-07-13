@@ -26,5 +26,5 @@ private-data/
 artifacts/*
 !artifacts/.gitkeep
 site/
+ci-efs-cache/
 RPT_*.pdf
-

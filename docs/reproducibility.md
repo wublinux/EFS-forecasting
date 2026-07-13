@@ -28,6 +28,8 @@ activations, and model files together.
 Do not copy unlicensed source data into this repository. Set `ADAPTFORECAST_DATA_DIR`, run
 `adaptforecast prepare` when the legacy converter is needed, and reference the resulting file by
 name in a local configuration. The manifest records its hash without publishing its records.
+`configs/benchmark.private.example.yaml` resolves the input through that environment variable and
+writes full-run artifacts to the repository's parent directory.
 
 ## Continuous integration
 
@@ -35,6 +37,12 @@ Python CI verifies conversion, leakage barriers, date alignment, metrics, artifa
 linting, and documentation. MATLAB CI uses a deliberately small synthetic training job. Full
 three-seed optimization remains an explicit local research run because it is computationally
 expensive.
+
+The public runner uses a staged file contract because temporary MATLAB Actions licensing is
+available to the official runner action rather than arbitrary child processes. Python first
+writes hash-identified jobs, the official action executes them, and the normal benchmark accepts
+the results only when the job configuration and input CSV hashes match exactly. Local execution
+continues to use `matlab -batch` directly.
 
 On hosts where MATLAB is not on `PATH`, set `ADAPTFORECAST_MATLAB_EXECUTABLE` to the full path
 of the MATLAB executable. CI obtains this path from the official `setup-matlab` action output.

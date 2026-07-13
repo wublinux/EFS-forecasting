@@ -77,6 +77,13 @@ Convert the original 27-column thesis layout without publishing it:
 adaptforecast prepare private-wide.csv canonical-private.csv --legacy-wide
 ```
 
+Then run the private audit without copying data or results into the repository:
+
+```powershell
+$env:ADAPTFORECAST_DATA_DIR = "C:\path\to\private-data"
+adaptforecast benchmark --config configs/benchmark.private.example.yaml
+```
+
 See [data/README.md](data/README.md) for the canonical schema. Data is not licensed under the
 MIT software license.
 

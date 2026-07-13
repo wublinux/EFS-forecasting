@@ -33,10 +33,24 @@ jobs:
           cache: pip
       - name: Install Python benchmark dependencies
         run: pip install -e ".[benchmark]"
+      - name: Prepare hash-identified MATLAB jobs
+        run: >-
+          python scripts/prepare_matlab_smoke_jobs.py
+          --config configs/benchmark.smoke.yaml
+          --cache ci-efs-cache
+      - name: Execute prepared jobs with MATLAB Actions licensing
+        uses: matlab-actions/run-command@v3
+        with:
+          command: >-
+            addpath('matlab');
+            jobs = dir(fullfile('ci-efs-cache','efs','**','job.json'));
+            for k = 1:numel(jobs),
+            adaptforecast.runJob(fullfile(jobs(k).folder,jobs(k).name));
+            end
       - name: Run Python-to-MATLAB smoke benchmark
         run: adaptforecast benchmark --config configs/benchmark.smoke.yaml
         env:
-          ADAPTFORECAST_MATLAB_EXECUTABLE: ${{ steps.setup-matlab.outputs.matlabroot }}/bin/matlab
+          ADAPTFORECAST_EFS_CACHE_DIR: ${{ github.workspace }}/ci-efs-cache
       - name: Verify cross-language artifacts
         run: python scripts/verify_smoke_artifact.py artifacts
       - name: Upload audited synthetic smoke artifact

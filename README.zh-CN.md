@@ -63,6 +63,13 @@ $env:ADAPTFORECAST_DATA_DIR = "C:\path\to\private-data"
 adaptforecast prepare private-wide.csv canonical-private.csv --legacy-wide
 ```
 
+转换后可直接运行仓库外的完整私有审计，数据和结果都不会写入公开仓库：
+
+```powershell
+$env:ADAPTFORECAST_DATA_DIR = "C:\path\to\private-data"
+adaptforecast benchmark --config configs/benchmark.private.example.yaml
+```
+
 统一字段为 `date, category, sales, avg_temp, max_temp, min_temp, humidity, rainfall`。
 MIT 许可证只覆盖代码，不覆盖任何私有或第三方数据。
 
@@ -91,4 +98,3 @@ MATLAB 可用时的 `.mat` 模型、规则表和激活矩阵。
 
 详细内容见 [方法](docs/methodology.md)、[复现指南](docs/reproducibility.md)、
 [论文对齐](docs/thesis-alignment.md)和[局限](docs/limitations.md)。
-
