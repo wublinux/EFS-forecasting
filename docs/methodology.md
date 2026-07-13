@@ -19,6 +19,8 @@ baseline and three-lag models share exactly the same target dates.
 
 - **Seasonal naive:** demand from seven days earlier.
 - **ARIMA:** `(p,d,q)` selected by training-set AIC; the full grid uses `p,q=0..3`, `d=0..1`.
+  Evaluation is rolling one-step-ahead: each observed test-day sale becomes history only after
+  that day's forecast has been made.
 - **LSTM:** one 32-unit layer and linear output, Adam at `1e-3`, temporal 80/20 training
   validation, maximum 300 epochs, patience 30.
 - **EFS sales-only:** three normalized lag inputs.
@@ -34,7 +36,9 @@ weather-model rules.
 
 RMSE, MAE, MASE, and sMAPE are computed in original sales units. Normalized RMSE and MAE are
 reported only for thesis comparison. Three stochastic seeds are summarized as mean and standard
-deviation.
+deviation at both category and eight-category macro levels. Weather-ablation percentages compare
+the weather and sales-only EFS variants using the same metric and seed; positive values mean the
+weather variant reduced error.
 
 Rules are exported with semantic antecedents/consequents, weights, empirical support, and mean
 and maximum activation. They describe associations learned from the data and are not causal

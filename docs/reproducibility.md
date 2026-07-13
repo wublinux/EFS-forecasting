@@ -20,7 +20,8 @@ adaptforecast benchmark --config configs/benchmark.yaml
 ```
 
 The resulting artifact directory is authoritative. Preserve its `manifest.json`, data SHA-256,
-configuration, metrics, predictions, rules, activations, and model files together.
+configuration, per-category and macro summaries, weather-ablation tables, predictions, rules,
+activations, and model files together.
 
 ## Private data
 
@@ -35,3 +36,5 @@ linting, and documentation. MATLAB CI uses a deliberately small synthetic traini
 three-seed optimization remains an explicit local research run because it is computationally
 expensive.
 
+On hosts where MATLAB is not on `PATH`, set `ADAPTFORECAST_MATLAB_EXECUTABLE` to the full path
+of the MATLAB executable. CI obtains this path from the official `setup-matlab` action output.

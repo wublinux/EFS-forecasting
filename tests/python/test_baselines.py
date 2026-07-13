@@ -21,6 +21,7 @@ def test_arima_smoke_runs_when_statsmodels_is_installed(prepared_sample) -> None
     forecast = arima_forecast(prepared_sample.train, prepared_sample.test, "smoke")
     assert len(forecast.values) == 75
     assert "order" in forecast.details
+    assert forecast.details["protocol"] == "rolling_one_step"
 
 
 def test_lstm_smoke_is_deterministic(prepared_sample) -> None:

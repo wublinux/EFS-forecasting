@@ -55,6 +55,30 @@ def _metric_row(
     }
 
 
+METRIC_COLUMNS = ["rmse", "mae", "mase", "smape", "rmse_norm", "mae_norm"]
+
+
+def _weather_ablation(metrics: pd.DataFrame) -> pd.DataFrame:
+    efs = metrics.loc[metrics["model"] == "efs"]
+    sales_only = efs.loc[efs["variant"] == "sales_only"]
+    weather = efs.loc[efs["variant"] == "target_weather"]
+    paired = sales_only.merge(
+        weather, on=["category", "model", "seed"], suffixes=("_sales_only", "_target_weather")
+    )
+    result = paired[["category", "seed"]].copy()
+    for metric in METRIC_COLUMNS:
+        sales_column = f"{metric}_sales_only"
+        weather_column = f"{metric}_target_weather"
+        result[sales_column] = paired[sales_column]
+        result[weather_column] = paired[weather_column]
+        result[f"{metric}_improvement_pct"] = np.where(
+            paired[sales_column] != 0,
+            100 * (paired[sales_column] - paired[weather_column]) / paired[sales_column],
+            np.nan,
+        )
+    return result
+
+
 def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") -> Path:
     root = Path(repository_root).resolve()
     data_path = (root / config.data_path).resolve()
@@ -176,6 +200,14 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
                                 "minimum": prepared.scales["sales"].minimum,
                                 "maximum": prepared.scales["sales"].maximum,
                             },
+                            "scales": {
+                                name: {
+                                    "minimum": scale.minimum,
+                                    "maximum": scale.maximum,
+                                }
+                                for name, scale in prepared.scales.items()
+                            },
+                            "training_medians": prepared.medians,
                             "input_policy": "training_minmax_then_clip_0_1",
                         },
                     )
@@ -215,16 +247,35 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
         pd.DataFrame(unavailable, columns=["category", "model", "reason"]),
     )
     if not metrics.empty:
-        numeric = ["rmse", "mae", "mase", "smape", "rmse_norm", "mae_norm"]
+        category_summary = (
+            metrics.groupby(["category", "model", "variant"], dropna=False)[METRIC_COLUMNS]
+            .agg(["mean", "std"])
+            .reset_index()
+        )
+        category_summary.columns = [
+            column if isinstance(column, str) else "_".join(part for part in column if part)
+            for column in category_summary.columns
+        ]
+        write_table(run_dir / "category_summary.csv", category_summary)
         macro = (
-            metrics.groupby(["model", "variant", "seed"], dropna=False)[numeric]
+            metrics.groupby(["model", "variant", "seed"], dropna=False)[METRIC_COLUMNS]
             .mean()
             .reset_index()
         )
-        summary = macro.groupby(["model", "variant"], dropna=False)[numeric].agg(["mean", "std"])
+        summary = macro.groupby(["model", "variant"], dropna=False)[METRIC_COLUMNS].agg(
+            ["mean", "std"]
+        )
         summary.columns = [f"{name}_{stat}" for name, stat in summary.columns]
         write_table(run_dir / "macro_metrics.csv", macro)
         write_table(run_dir / "macro_summary.csv", summary.reset_index())
+        ablation = _weather_ablation(metrics)
+        write_table(run_dir / "weather_ablation.csv", ablation)
+        if not ablation.empty:
+            ablation_summary = (
+                ablation.drop(columns=["category", "seed"]).agg(["mean", "std"]).transpose()
+            )
+            ablation_summary.index.name = "measure"
+            write_table(run_dir / "weather_ablation_summary.csv", ablation_summary.reset_index())
     if not predictions.empty:
         save_forecast_plots(predictions, run_dir / "plots")
     save_rule_activation_plots(run_dir)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -44,6 +45,8 @@ def load_config(path: str | Path) -> BenchmarkConfig:
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     efs = EFSConfig(**raw.pop("efs", {}))
     config = BenchmarkConfig(**raw, efs=efs)
+    if executable := os.getenv("ADAPTFORECAST_MATLAB_EXECUTABLE"):
+        config.efs.executable = executable
     if config.profile == "smoke":
         config.seeds = config.seeds[:1]
         config.efs.population_size = min(config.efs.population_size, 10)

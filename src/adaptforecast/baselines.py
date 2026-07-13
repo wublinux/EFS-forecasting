@@ -63,12 +63,17 @@ def arima_forecast(train: pd.DataFrame, test: pd.DataFrame, profile: str = "full
                     best_aic, best_order, best_fit = float(fit.aic), (p, d, q), fit
     if best_fit is None or best_order is None:
         raise RuntimeError("ARIMA search did not produce a valid fitted model")
-    predicted = np.asarray(best_fit.forecast(steps=len(ordered_test)), dtype=float)
+    predictions: list[float] = []
+    rolling_fit = best_fit
+    for observed in ordered_test["sales"].to_numpy(dtype=float):
+        predictions.append(float(np.asarray(rolling_fit.forecast(steps=1)).reshape(-1)[0]))
+        rolling_fit = rolling_fit.append([observed], refit=False)
+    predicted = np.asarray(predictions, dtype=float)
     mask = ordered_test["target_observed"].to_numpy(dtype=bool)
     return Forecast(
         pd.DatetimeIndex(ordered_test.loc[mask, "date"]),
         predicted[mask],
-        {"order": best_order, "aic": best_aic},
+        {"order": best_order, "aic": best_aic, "protocol": "rolling_one_step"},
     )
 
 

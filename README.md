@@ -43,6 +43,7 @@ Search tuning of type-2 lower scale and lag while upper parameters are fixed.
 
 MATLAB is not required to validate data, inspect artifacts, or run available Python baselines.
 The Streamlit app automatically becomes a results browser when MATLAB is unavailable.
+Set `ADAPTFORECAST_MATLAB_EXECUTABLE` when MATLAB is installed outside the system `PATH`.
 
 ## Quick start
 
@@ -123,4 +124,3 @@ Read [Methodology](docs/methodology.md), [Reproducibility](docs/reproducibility.
 
 Code is licensed under the [MIT License](LICENSE). The license does not cover private or
 third-party datasets. Citation metadata is provided in [CITATION.cff](CITATION.cff).
-

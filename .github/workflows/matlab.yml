@@ -15,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up MATLAB R2024b and toolboxes
+        id: setup-matlab
         uses: matlab-actions/setup-matlab@v3
         with:
           release: R2024b
@@ -34,9 +35,12 @@ jobs:
         run: pip install -e ".[benchmark]"
       - name: Run Python-to-MATLAB smoke benchmark
         run: adaptforecast benchmark --config configs/benchmark.smoke.yaml
+        env:
+          ADAPTFORECAST_MATLAB_EXECUTABLE: ${{ steps.setup-matlab.outputs.matlabroot }}/bin/matlab
       - name: Verify cross-language artifacts
         run: python scripts/verify_smoke_artifact.py artifacts
       - name: Upload audited synthetic smoke artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: synthetic-smoke-${{ github.sha }}

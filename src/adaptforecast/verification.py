@@ -25,7 +25,11 @@ def verify_smoke_artifact(root: Path) -> Path:
     expected_models = {"seasonal_naive", "arima", "lstm", "efs"}
     missing_models = expected_models - set(metrics["model"])
     if missing_models:
-        raise RuntimeError(f"Missing smoke models: {sorted(missing_models)}")
+        unavailable_path = run_dir / "unavailable.csv"
+        diagnostic = ""
+        if unavailable_path.exists():
+            diagnostic = f"; unavailable records: {unavailable_path.read_text(encoding='utf-8')}"
+        raise RuntimeError(f"Missing smoke models: {sorted(missing_models)}{diagnostic}")
     efs_variants = set(metrics.loc[metrics["model"] == "efs", "variant"])
     if efs_variants != {"sales_only", "target_weather"}:
         raise RuntimeError(f"Unexpected EFS variants: {sorted(efs_variants)}")
