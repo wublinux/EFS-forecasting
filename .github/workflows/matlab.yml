@@ -26,3 +26,20 @@ jobs:
         uses: matlab-actions/run-command@v3
         with:
           command: addpath('matlab'); results = runtests('tests/matlab'); assertSuccess(results)
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install Python benchmark dependencies
+        run: pip install -e ".[benchmark]"
+      - name: Run Python-to-MATLAB smoke benchmark
+        run: adaptforecast benchmark --config configs/benchmark.smoke.yaml
+      - name: Verify cross-language artifacts
+        run: python scripts/verify_smoke_artifact.py artifacts
+      - name: Upload audited synthetic smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-smoke-${{ github.sha }}
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 14

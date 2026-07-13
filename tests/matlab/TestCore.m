@@ -28,5 +28,21 @@ classdef TestCore < matlab.unittest.TestCase
             testCase.verifyEqual(string(activation.Properties.VariableNames(2:end)), ...
                 "rule_" + (1:numel(fis.Rules)));
         end
+
+        function noRuleFiringIsHandledWithoutWarningOrShapeLoss(testCase)
+            fis = sugfis(Name="NoRuleFiringFixture");
+            fis = addInput(fis, [0 1], Name="x");
+            fis = addMF(fis, "x", "trimf", [0 .1 .2], Name="Low");
+            fis = addOutput(fis, [0 1], Name="y");
+            fis = addMF(fis, "y", "constant", .2, Name="LowDemand");
+            fis = addRule(fis, "x==Low => y=LowDemand");
+            input = table(datetime(2017, 3, 1)', .9, VariableNames=["date", "x"]);
+
+            [prediction, activation] = adaptforecast.predict(fis, input, "x");
+
+            testCase.verifySize(prediction, [1 2]);
+            testCase.verifySize(activation, [1 2]);
+            testCase.verifyEqual(activation.rule_1, 0, AbsTol=1e-12);
+        end
     end
 end

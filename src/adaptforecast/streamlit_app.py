@@ -43,7 +43,10 @@ def show_run(manifest_path: Path) -> None:
     if rules:
         st.subheader("Fuzzy-rule audit")
         st.caption("Rules express learned associations, not causal claims.")
-        st.dataframe(pd.read_csv(rules[0]), use_container_width=True)
+        selected_rules = st.selectbox(
+            "Rule artifact", rules, format_func=lambda path: str(path.relative_to(run_dir))
+        )
+        st.dataframe(pd.read_csv(selected_rules), use_container_width=True)
 
 
 def main() -> None:
@@ -86,6 +89,10 @@ def main() -> None:
         st.caption("This dataset is synthetic and is not derived from the private Walmart data.")
     with tabs[2]:
         profile = st.radio("Profile", ["smoke", "full"], horizontal=True)
+        sample_categories = sorted(
+            load_canonical(ROOT / "data" / "sample" / "synthetic_demand.csv")["category"].unique()
+        )
+        run_category = st.selectbox("Training category", sample_categories)
         st.write(
             "Training is intentionally explicit and writes a complete artifact directory. "
             "Full EFS training requires MATLAB R2024b+, Fuzzy Logic Toolbox, Global "
@@ -94,9 +101,11 @@ def main() -> None:
         if st.button("Run benchmark", disabled=not matlab_ready):
             from adaptforecast.benchmark import run_benchmark
 
-            config_path = ROOT / "configs" / f"benchmark.{profile}.yaml"
+            config_name = "benchmark.smoke.yaml" if profile == "smoke" else "benchmark.yaml"
+            config = load_config(ROOT / "configs" / config_name)
+            config.categories = [run_category]
             with st.status("Running audited benchmark...", expanded=True):
-                run_dir = run_benchmark(load_config(config_path), ROOT)
+                run_dir = run_benchmark(config, ROOT)
             st.success(f"Completed: {run_dir}")
 
 

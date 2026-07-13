@@ -25,10 +25,10 @@ baseline and three-lag models share exactly the same target dates.
 - **EFS target-weather:** the same lags plus normalized average temperature, humidity, and
   rainfall for the target date.
 
-EFS first learns a rule base with a genetic algorithm and Pattern Search hybrid refinement. It
-then performs local parameter tuning, followed by type-2 lower-scale/lower-lag tuning with upper
-parameters fixed. Two input membership functions give at most 8 sales-only or 64 weather-model
-rules.
+EFS first learns a rule base with a genetic algorithm. It then performs Pattern Search parameter
+tuning, followed by a separate Pattern Search of type-2 lower-scale/lower-lag parameters while
+upper parameters remain fixed. Two input membership functions give at most 8 sales-only or 64
+weather-model rules.
 
 ## Metrics and explanations
 
@@ -39,4 +39,3 @@ deviation.
 Rules are exported with semantic antecedents/consequents, weights, empirical support, and mean
 and maximum activation. They describe associations learned from the data and are not causal
 claims.
-

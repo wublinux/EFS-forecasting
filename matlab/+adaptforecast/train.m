@@ -19,13 +19,12 @@ efsConfig = config.efs;
 fisin = adaptforecast.initializeFIS(featureNames, double(efsConfig.num_input_mfs));
 started = tic;
 
-% Stage 1: global rule learning with a GA and local hybrid refinement.
+% Stage 1: global rule learning with a GA.
 learnOptions = tunefisOptions(Method="ga", OptimizationType="learning");
 learnOptions.NumMaxRules = double(efsConfig.num_input_mfs) ^ numel(featureNames);
 learnOptions.MethodOptions.PopulationSize = double(efsConfig.population_size);
 learnOptions.MethodOptions.MaxGenerations = double(efsConfig.max_generations);
 learnOptions.MethodOptions.CrossoverFraction = double(efsConfig.crossover_fraction);
-learnOptions.MethodOptions.HybridFcn = @patternsearch;
 learnOptions.UseParallel = logical(efsConfig.use_parallel);
 fisRules = tunefis(fisin, [], X, y, learnOptions);
 
@@ -41,6 +40,7 @@ tuneOptions = tunefisOptions(Method="patternsearch", OptimizationType="tuning");
 tuneOptions.MethodOptions.MaxIterations = double(efsConfig.pattern_max_iterations);
 tuneOptions.UseParallel = logical(efsConfig.use_parallel);
 fisParameters = tunefis(fisRules, [inputSettings; outputSettings], X, y, tuneOptions);
+stage2UpperParameters = collectUpperParameters(fisParameters);
 
 % Stage 3: freeze upper parameters and tune only interval uncertainty.
 [uncertaintySettings, ~] = getTunableSettings(fisParameters, AsymmetricLag=true);
@@ -52,6 +52,11 @@ for inputIndex = 1:numel(uncertaintySettings)
     end
 end
 model = tunefis(fisParameters, uncertaintySettings, X, y, tuneOptions);
+stage3UpperParameters = collectUpperParameters(model);
+upperParameterMaxDelta = max(abs(stage3UpperParameters - stage2UpperParameters), [], "all");
+if isempty(upperParameterMaxDelta)
+    upperParameterMaxDelta = 0;
+end
 model = adaptforecast.semanticizeOutputs(model);
 
 trainingSummary = struct( ...
@@ -60,6 +65,17 @@ trainingSummary = struct( ...
     num_inputs=numel(model.Inputs), ...
     num_rules=numel(model.Rules), ...
     elapsed_seconds=toc(started), ...
-    optimization="ga_then_patternsearch_then_type2_uncertainty");
+    optimization="ga_then_patternsearch_then_type2_uncertainty", ...
+    upper_parameter_max_delta=upperParameterMaxDelta, ...
+    upper_parameters_locked=upperParameterMaxDelta <= 1e-12);
 end
 
+function parameters = collectUpperParameters(fis)
+parameters = zeros(0, 1);
+for inputIndex = 1:numel(fis.Inputs)
+    for mfIndex = 1:numel(fis.Inputs(inputIndex).MembershipFunctions)
+        current = fis.Inputs(inputIndex).MembershipFunctions(mfIndex).UpperParameters;
+        parameters = [parameters; current(:)]; %#ok<AGROW>
+    end
+end
+end

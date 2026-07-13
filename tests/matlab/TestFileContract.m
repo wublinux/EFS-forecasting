@@ -38,6 +38,19 @@ classdef TestFileContract < matlab.unittest.TestCase
             testCase.verifyTrue(isfile(fullfile(job.output_dir, "activations.csv")));
             predictions = readtable(fullfile(job.output_dir, "predictions.csv"));
             testCase.verifyEqual(height(predictions), height(testData));
+            trained = load(fullfile(job.output_dir, "model.mat"), "summary");
+            testCase.verifyLessThanOrEqual(trained.summary.num_rules, 2);
+            testCase.verifyTrue(trained.summary.upper_parameters_locked);
+            testCase.verifyEqual(trained.summary.upper_parameter_max_delta, 0, AbsTol=1e-12);
+
+            firstPredictions = predictions.prediction_norm;
+            job.output_dir = fullfile(root, "repeat-output");
+            file = fopen(jobPath, "w");
+            fprintf(file, "%s", jsonencode(job));
+            fclose(file);
+            adaptforecast.runJob(jobPath);
+            repeated = readtable(fullfile(job.output_dir, "predictions.csv"));
+            testCase.verifyEqual(repeated.prediction_norm, firstPredictions, AbsTol=1e-12);
         end
     end
 end

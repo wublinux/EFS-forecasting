@@ -73,3 +73,12 @@ def test_missing_target_is_excluded_but_history_is_imputed() -> None:
     supervised = make_supervised(prepared.train, prepared.scales, [1, 2, 3], ["avg_temp"])
     assert pd.Timestamp("2016-03-02") not in set(supervised["date"])
     assert np.isfinite(supervised.filter(like="sales_lag").to_numpy()).all()
+
+
+def test_test_year_forward_fill_cannot_cross_the_year_boundary() -> None:
+    frame = canonical_fixture()
+    frame.loc[frame["date"] == pd.Timestamp("2017-03-01"), "sales"] = np.nan
+    prepared = prepare_category(frame, "water", 2016, 2017, ["avg_temp"])
+
+    assert prepared.test.iloc[0]["sales"] == prepared.medians["sales"]
+    assert prepared.test.iloc[0]["sales"] != prepared.train.iloc[-1]["sales"]
