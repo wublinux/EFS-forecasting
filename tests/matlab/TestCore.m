@@ -22,8 +22,7 @@ classdef TestCore < matlab.unittest.TestCase
                 VariableNames=["date", "sales_lag_1"]);
             [prediction, activation] = adaptforecast.predict(fis, input, "sales_lag_1");
             testCase.verifySize(prediction, [3 2]);
-            testCase.verifyHeight(activation, height(input));
-            testCase.verifyWidth(activation, 1 + numel(fis.Rules));
+            testCase.verifySize(activation, [height(input), 1 + numel(fis.Rules)]);
             testCase.verifyEqual(activation.date, input.date);
             testCase.verifyEqual(string(activation.Properties.VariableNames(2:end)), ...
                 "rule_" + (1:numel(fis.Rules)));

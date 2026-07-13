@@ -1,45 +1,14 @@
-"""Fail CI unless the newest synthetic smoke run satisfies the public contract."""
+"""Command-line wrapper for the synthetic smoke artifact verifier."""
 
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-import pandas as pd
-
-
-def verify(root: Path) -> Path:
-    manifests = sorted(root.glob("*/manifest.json"))
-    if not manifests:
-        raise RuntimeError(f"No run manifest found below {root}")
-    manifest_path = manifests[-1]
-    run_dir = manifest_path.parent
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("status") != "complete":
-        raise RuntimeError("Smoke run did not complete")
-    if len(str(manifest.get("data_sha256", ""))) != 64:
-        raise RuntimeError("Manifest does not contain a SHA-256 data identity")
-
-    metrics = pd.read_csv(run_dir / "metrics.csv")
-    expected_models = {"seasonal_naive", "arima", "lstm", "efs"}
-    missing_models = expected_models - set(metrics["model"])
-    if missing_models:
-        raise RuntimeError(f"Missing smoke models: {sorted(missing_models)}")
-    efs_variants = set(metrics.loc[metrics["model"] == "efs", "variant"])
-    if efs_variants != {"sales_only", "target_weather"}:
-        raise RuntimeError(f"Unexpected EFS variants: {sorted(efs_variants)}")
-
-    efs_root = run_dir / "efs"
-    required = ["model.mat", "predictions.csv", "rules.csv", "activations.csv"]
-    for name in required:
-        if not list(efs_root.glob(f"**/{name}")):
-            raise RuntimeError(f"No EFS {name} was produced")
-    return run_dir
-
+from adaptforecast.verification import verify_smoke_artifact
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("artifact_root", type=Path)
-    verified = verify(parser.parse_args().artifact_root)
+    verified = verify_smoke_artifact(parser.parse_args().artifact_root)
     print(f"Verified smoke artifact: {verified}")

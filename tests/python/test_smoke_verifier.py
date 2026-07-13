@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from scripts.verify_smoke_artifact import verify
+from adaptforecast.verification import verify_smoke_artifact
 
 
 def test_smoke_verifier_rejects_incomplete_contract(tmp_path: Path) -> None:
@@ -17,4 +17,4 @@ def test_smoke_verifier_rejects_incomplete_contract(tmp_path: Path) -> None:
     )
 
     with pytest.raises(RuntimeError, match="Missing smoke models"):
-        verify(tmp_path)
+        verify_smoke_artifact(tmp_path)
