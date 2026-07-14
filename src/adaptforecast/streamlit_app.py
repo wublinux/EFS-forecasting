@@ -17,7 +17,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def available_runs() -> list[Path]:
-    return sorted((ROOT / "artifacts").glob("*/manifest.json"), reverse=True)
+    manifests = list((ROOT / "artifacts").glob("*/manifest.json"))
+    manifests.extend((ROOT / "data" / "precomputed").glob("**/manifest.json"))
+    return sorted(manifests, key=lambda path: path.stat().st_mtime, reverse=True)
 
 
 def show_run(manifest_path: Path) -> None:

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "seed": 42,
+  "num_inputs": 3,
+  "num_rules": 7,
+  "elapsed_seconds": 3.200991,
+  "optimization": "ga_then_patternsearch_then_type2_uncertainty",
+  "upper_parameter_max_delta": 0,
+  "upper_parameters_locked": true
+}

@@ -9,13 +9,22 @@ theme:
     - content.code.copy
 nav:
   - Home: index.md
+  - Architecture: architecture.md
   - Methodology: methodology.md
+  - Audited results: results.md
   - Reproducibility: reproducibility.md
   - Thesis alignment: thesis-alignment.md
   - Limitations: limitations.md
 markdown_extensions:
   - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - tables
   - toc:
       permalink: true
-

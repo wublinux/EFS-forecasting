@@ -17,6 +17,7 @@ build/
 *.asv
 *.m~
 *.mat
+!data/precomputed/**/*.mat
 *.fig
 *.log
 
@@ -25,6 +26,7 @@ data/private/
 private-data/
 artifacts/*
 !artifacts/.gitkeep
+predictions-example.csv
 site/
 ci-efs-cache/
 downloads/

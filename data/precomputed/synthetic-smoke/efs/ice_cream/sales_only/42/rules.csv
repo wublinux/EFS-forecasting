@@ -1,0 +1,8 @@
+rule_id,antecedent,consequent,weight,support,mean_activation,max_activation
+1,sales_lag_3 is Low,Medium,1,66,0.371045216986848,0.796446704657875
+2,sales_lag_1 is Low,Low,1,21,0.101034410872896,0.687173924172695
+3,sales_lag_2 is Low AND sales_lag_3 is High,Medium,1,0,0,0
+4,sales_lag_1 is High AND sales_lag_3 is Low,Peak_3,1,65,0.150288311602439,0.550523140197642
+5,sales_lag_1 is Low AND sales_lag_2 is High AND sales_lag_3 is Low,Peak,1,0,0,0
+6,sales_lag_1 is Low AND sales_lag_2 is Low,Medium_2,1,0,0,0
+7,sales_lag_1 is High AND sales_lag_2 is High AND sales_lag_3 is Low,Critical_Low,1,0,0,0

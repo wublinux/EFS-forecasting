@@ -18,3 +18,9 @@ def test_smoke_verifier_rejects_incomplete_contract(tmp_path: Path) -> None:
 
     with pytest.raises(RuntimeError, match="Missing smoke models"):
         verify_smoke_artifact(tmp_path)
+
+
+def test_checked_in_synthetic_snapshot_satisfies_full_smoke_contract() -> None:
+    root = Path(__file__).resolve().parents[2] / "data" / "precomputed"
+    verified = verify_smoke_artifact(root)
+    assert verified.name == "synthetic-smoke"

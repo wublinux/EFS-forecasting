@@ -1,0 +1,61 @@
+rule_id,antecedent,consequent,weight,support,mean_activation,max_activation
+1,sales_lag_1 is Low AND sales_lag_2 is High AND sales_lag_3 is Low AND humidity is Low AND rainfall is Low,Low_8,1,0,0,0
+2,sales_lag_1 is Low AND avg_temp is Low AND humidity is High AND rainfall is High,Medium_9,1,8,0.00584383471914624,0.102074920443232
+3,sales_lag_2 is Low AND sales_lag_3 is Low,High_4,1,60,0.159262802652631,0.527172455575531
+4,sales_lag_1 is High AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is Low AND humidity is High AND rainfall is Low,Peak_11,1,0,0,0
+5,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is High AND avg_temp is Low AND humidity is Low,High_13,1,1,0.000348000255903871,0.0250560184250787
+6,sales_lag_1 is Low AND avg_temp is Low AND rainfall is Low,Critical_Low,1,57,0.191902511815791,0.73059637029046
+7,sales_lag_1 is High AND sales_lag_2 is High AND sales_lag_3 is High AND avg_temp is Low AND humidity is High AND rainfall is Low,Critical_Low_5,1,0,0,0
+8,sales_lag_1 is High AND sales_lag_2 is Low AND sales_lag_3 is Low AND humidity is Low AND rainfall is High,High_7,1,0,0,0
+9,sales_lag_1 is High AND sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is High AND humidity is Low AND rainfall is High,High_7,1,0,0,0
+10,sales_lag_1 is Low AND sales_lag_2 is High AND humidity is Low AND rainfall is High,Medium_5,1,0,0,0
+11,sales_lag_1 is Low AND avg_temp is Low AND rainfall is High,Critical_Low_12,1,10,0.0124107852901465,0.171757409126915
+12,sales_lag_1 is Low AND sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is High AND humidity is High AND rainfall is Low,High_2,1,0,0,0
+13,sales_lag_1 is Low AND sales_lag_3 is Low AND avg_temp is Low AND humidity is Low AND rainfall is Low,Critical_Low_8,1,1,0.000211491682991768,0.0152274011754073
+14,sales_lag_3 is Low AND avg_temp is Low AND humidity is High,Critical_Low_10,1,49,0.109100124054179,0.659308852351424
+15,sales_lag_1 is High AND sales_lag_2 is Low AND avg_temp is Low AND humidity is High AND rainfall is High,Critical_Low_8,1,0,0,0
+16,sales_lag_1 is High AND sales_lag_2 is Low AND sales_lag_3 is Low AND rainfall is Low,Peak,1,0,0,0
+17,sales_lag_3 is Low AND avg_temp is Low AND rainfall is Low,Critical_Low_7,1,60,0.193300825403151,0.635796802773651
+18,sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is High AND rainfall is High,High_8,1,4,0.00133712786440306,0.0318640963484795
+19,sales_lag_1 is High AND sales_lag_2 is High AND sales_lag_3 is High AND avg_temp is High AND humidity is Low,High_2,1,0,0,0
+20,sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is Low AND humidity is High,Critical_Low_13,1,41,0.0537950785716961,0.436400156650894
+21,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND humidity is Low,Critical_Low_4,1,1,0.000247413544895153,0.017813775232451
+22,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is High AND rainfall is High,Medium_12,1,1,0.000589122615584105,0.0121013694318871
+23,sales_lag_3 is High AND avg_temp is High AND humidity is High AND rainfall is Low,High_5,1,40,0.0684148449723637,0.623543350046748
+24,sales_lag_2 is Low AND sales_lag_3 is High AND rainfall is Low,High,1,64,0.119908402173059,0.363886739139084
+25,sales_lag_2 is Low AND avg_temp is High AND humidity is High AND rainfall is High,Critical_Low_11,1,5,0.00168592096906325,0.051385312333581
+26,sales_lag_1 is Low AND sales_lag_2 is Low AND humidity is Low AND rainfall is Low,Peak_8,1,1,0.00172409116230707,0.124134563686109
+27,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is Low AND rainfall is Low,Low_11,1,41,0.0427519474669154,0.256492203557782
+28,sales_lag_1 is Low AND sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is Low AND humidity is High AND rainfall is High,Medium_3,1,0,0,0
+29,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is Low AND humidity is Low AND rainfall is High,Critical_Low_13,1,0,0,0
+30,sales_lag_1 is Low AND sales_lag_2 is Low AND avg_temp is Low AND rainfall is Low,Critical_Low,1,50,0.0903131061718856,0.390859375361555
+31,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is Low,Medium_5,1,43,0.0488377407384963,0.256492203557782
+32,sales_lag_1 is Low AND sales_lag_2 is High AND avg_temp is Low AND humidity is High,Critical_Low_13,1,0,0,0
+33,sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is Low AND humidity is Low AND rainfall is Low,Critical_Low_12,1,0,0,0
+34,sales_lag_1 is Low AND sales_lag_2 is High AND sales_lag_3 is High AND humidity is Low AND rainfall is Low,Medium_9,1,0,0,0
+35,sales_lag_1 is High AND sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is Low AND humidity is High AND rainfall is Low,High,1,0,0,0
+36,sales_lag_1 is Low AND sales_lag_3 is Low AND humidity is Low,Critical_Low,1,1,0.000687869741967469,0.0495266214216577
+37,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is High AND avg_temp is Low AND humidity is Low AND rainfall is Low,Medium_12,1,1,0.000348000255903871,0.0250560184250787
+38,sales_lag_2 is Low AND humidity is High AND rainfall is Low,Low_9,1,57,0.152347648675477,0.655994330103324
+39,sales_lag_1 is Low AND sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is Low AND humidity is Low AND rainfall is Low,Medium_7,1,0,0,0
+40,sales_lag_1 is Low AND sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is High AND humidity is Low AND rainfall is Low,Peak_12,1,0,0,0
+41,sales_lag_1 is Low AND sales_lag_3 is Low AND humidity is Low AND rainfall is Low,High_7,1,1,0.000687869741967469,0.0495266214216577
+42,sales_lag_1 is Low AND sales_lag_2 is Low AND avg_temp is High AND humidity is Low AND rainfall is Low,Medium_6,1,1,0.000849185735568691,0.0611413729609458
+43,sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is High AND rainfall is Low,Medium,1,0,0,0
+44,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is High AND humidity is Low,High_6,1,0,0.000121861336398422,0.00877401622068637
+45,sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is High,Peak_8,1,40,0.0287486873477532,0.146202162830114
+46,sales_lag_1 is High AND avg_temp is Low AND humidity is Low AND rainfall is Low,Low_5,1,0,0,0
+47,sales_lag_1 is High AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is Low AND humidity is Low AND rainfall is Low,Medium_12,1,0,0,0
+48,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is Low AND humidity is Low,Peak_6,1,0,7.60694995177006e-05,0.00547700396527444
+49,avg_temp is Low AND humidity is Low,High_6,1,1,0.00427026267734232,0.307458912768647
+50,sales_lag_2 is High AND sales_lag_3 is Low AND avg_temp is Low AND rainfall is Low,Critical_Low_11,1,0,0,0
+51,sales_lag_1 is Low AND sales_lag_3 is Low AND avg_temp is Low,Critical_Low_14,1,51,0.0988265930937342,0.45637494399127
+52,sales_lag_1 is Low AND sales_lag_2 is Low AND avg_temp is Low AND humidity is High AND rainfall is High,Critical_Low_11,1,8,0.00300799723293868,0.0554296970872653
+53,sales_lag_1 is Low AND avg_temp is Low AND humidity is High AND rainfall is Low,High_11,1,47,0.0922413896844236,0.505712151322529
+54,sales_lag_3 is Low AND avg_temp is High AND humidity is Low AND rainfall is High,Medium_2,1,0,0,0
+55,sales_lag_1 is High AND sales_lag_3 is Low AND humidity is High AND rainfall is Low,Critical_Low,1,0,0,0
+56,sales_lag_1 is Low AND sales_lag_2 is High AND sales_lag_3 is High AND avg_temp is High AND humidity is Low AND rainfall is Low,High_9,1,0,0,0
+57,sales_lag_3 is High AND humidity is Low AND rainfall is Low,Peak_9,1,1,0.00911800349024919,0.656496251297942
+58,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND avg_temp is Low AND humidity is Low AND rainfall is Low,Peak_8,1,0,7.60694995177006e-05,0.00547700396527444
+59,sales_lag_1 is Low AND sales_lag_2 is Low AND sales_lag_3 is Low AND rainfall is High,High_12,1,8,0.00473478968792625,0.0747085761841868
+60,sales_lag_1 is Low AND sales_lag_3 is High AND avg_temp is High AND rainfall is High,High_9,1,3,0.00134082057798593,0.0451086485381688

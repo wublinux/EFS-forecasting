@@ -4,6 +4,10 @@
 `scripts/generate_sample_data.py`. It is not derived from the Walmart China dataset and is
 provided only to exercise the software and tests.
 
+`precomputed/synthetic-smoke/` is a lightweight output snapshot generated from that same public
+synthetic data by the green MATLAB R2024b workflow. Its provenance is recorded alongside the
+files. It is integration evidence, not a private-data or publication-grade benchmark.
+
 The original thesis dataset is not distributed because its publication rights have not been
 confirmed. It is not covered by the repository's MIT license. Store authorized private data
 outside the repository and set `ADAPTFORECAST_DATA_DIR` to that directory.
@@ -21,4 +25,3 @@ Canonical CSV columns:
 
 The forecasting contract uses past sales and weather known or forecast for the target date. It
 does not use future observed sales.
-

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 
@@ -39,4 +40,21 @@ def verify_smoke_artifact(root: Path) -> Path:
     for name in required:
         if not list(efs_root.glob(f"**/{name}")):
             raise RuntimeError(f"No EFS {name} was produced")
+    for activation_path in efs_root.glob("**/activations.csv"):
+        activation = pd.read_csv(activation_path).drop(columns=["date"], errors="ignore")
+        values = activation.to_numpy(dtype=float)
+        if values.size == 0 or not np.isfinite(values).all():
+            raise RuntimeError(f"Invalid rule activation values: {activation_path}")
+        if values.min() < -1e-12 or values.max() > 1 + 1e-12:
+            raise RuntimeError(f"Rule activation is outside [0,1]: {activation_path}")
+        if np.max(np.std(values, axis=0)) <= 1e-12:
+            raise RuntimeError(f"Rule activation does not respond to inputs: {activation_path}")
+        rules = pd.read_csv(activation_path.with_name("rules.csv"))
+        if (rules["support"] < 0).any() or (rules["support"] > len(values)).any():
+            raise RuntimeError(f"Rule support is outside the sample count: {activation_path}")
+        summary = json.loads(
+            activation_path.with_name("training_summary.json").read_text(encoding="utf-8")
+        )
+        if summary.get("upper_parameters_locked") is not True:
+            raise RuntimeError(f"Type-2 upper parameters were not locked: {activation_path}")
     return run_dir

@@ -1,0 +1,51 @@
+{
+  "categories_completed": [
+    "ice cream"
+  ],
+  "config": {
+    "artifact_root": "artifacts",
+    "categories": [
+      "ice cream"
+    ],
+    "data_path": "data/sample/synthetic_demand.csv",
+    "efs": {
+      "crossover_fraction": 0.8,
+      "executable": "matlab",
+      "max_generations": 2,
+      "num_input_mfs": 2,
+      "pattern_max_iterations": 5,
+      "population_size": 10,
+      "use_parallel": false
+    },
+    "lags": [
+      1,
+      2,
+      3
+    ],
+    "models": [
+      "seasonal_naive",
+      "arima",
+      "lstm",
+      "efs"
+    ],
+    "profile": "smoke",
+    "seasonal_period": 7,
+    "seeds": [
+      42
+    ],
+    "test_year": 2017,
+    "train_year": 2016,
+    "weather_features": [
+      "avg_temp",
+      "humidity",
+      "rainfall"
+    ]
+  },
+  "created_at": "2026-07-14T00:09:09.877711+00:00",
+  "data_file": "synthetic_demand.csv",
+  "data_sha256": "8326ab729510d7f22f3da7a48e8f9443414c9105d19d1572839d09f40afa0084",
+  "metric_rows": 5,
+  "schema_version": 1,
+  "status": "complete",
+  "unavailable_models": 0
+}

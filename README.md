@@ -44,6 +44,8 @@ Search tuning of type-2 lower scale and lag while upper parameters are fixed.
 MATLAB is not required to validate data, inspect artifacts, or run available Python baselines.
 The Streamlit app automatically becomes a results browser when MATLAB is unavailable.
 Set `ADAPTFORECAST_MATLAB_EXECUTABLE` when MATLAB is installed outside the system `PATH`.
+The repository includes one explicitly labeled synthetic smoke snapshot so this browsing mode is
+useful immediately after a clean checkout.
 
 ## Quick start
 
@@ -101,6 +103,19 @@ MATLAB exposes `adaptforecast.train`, `adaptforecast.predict`, `adaptforecast.ev
 `adaptforecast.explain`. Python invokes them through `matlab -batch` and versioned JSON/CSV
 contracts, not MATLAB Engine.
 
+With MATLAB R2024b+ installed, a clean checkout can reproduce prediction from the checked-in
+synthetic sales-only smoke model:
+
+```bash
+adaptforecast predict \
+  --model data/precomputed/synthetic-smoke/efs/ice_cream/sales_only/42/model.mat \
+  --input data/precomputed/synthetic-smoke/efs/ice_cream/sales_only/42/inputs/test.csv \
+  --features sales_lag_1,sales_lag_2,sales_lag_3 \
+  --output predictions-example.csv
+```
+
+This example validates model loading and the file contract; it is not a performance claim.
+
 Each benchmark creates `artifacts/<run-id>/` with a manifest, data SHA-256, metrics,
 predictions, unavailable-model reasons, and EFS model/rule/activation files when MATLAB is
 available.
@@ -125,7 +140,8 @@ docs/                 Method, reproducibility, thesis alignment, limitations
   are available.
 
 Read [Methodology](docs/methodology.md), [Reproducibility](docs/reproducibility.md), and
-[Limitations](docs/limitations.md) before interpreting results.
+[Audited results](docs/results.md) before interpreting results; the smoke table is integration
+evidence, not a research comparison. See [Limitations](docs/limitations.md) for scope boundaries.
 
 ## License and citation
 

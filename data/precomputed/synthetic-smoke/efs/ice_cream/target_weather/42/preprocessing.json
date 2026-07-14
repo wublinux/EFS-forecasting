@@ -1,0 +1,41 @@
+{
+  "category": "ice cream",
+  "feature_columns": [
+    "sales_lag_1",
+    "sales_lag_2",
+    "sales_lag_3",
+    "avg_temp",
+    "humidity",
+    "rainfall"
+  ],
+  "input_policy": "training_minmax_then_clip_0_1",
+  "sales_scale": {
+    "maximum": 6221.32,
+    "minimum": 2552.05
+  },
+  "scales": {
+    "avg_temp": {
+      "maximum": 26.47,
+      "minimum": 10.65
+    },
+    "humidity": {
+      "maximum": 86.16,
+      "minimum": 49.28
+    },
+    "rainfall": {
+      "maximum": 29.4,
+      "minimum": 0.0
+    },
+    "sales": {
+      "maximum": 6221.32,
+      "minimum": 2552.05
+    }
+  },
+  "schema_version": 1,
+  "training_medians": {
+    "avg_temp": 16.24,
+    "humidity": 70.36,
+    "rainfall": 0.0,
+    "sales": 4182.5
+  }
+}
