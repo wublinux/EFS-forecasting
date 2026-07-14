@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -59,3 +60,23 @@ def test_hash_matching_ci_cache_reuses_file_contract_without_launching_matlab(
 
     assert result["prediction_norm"].tolist() == [0.25, 0.35]
     assert (output / "model.mat").read_text(encoding="utf-8") == "cached"
+
+
+def test_saved_model_prediction_writes_versioned_job(monkeypatch, tmp_path: Path) -> None:
+    model = tmp_path / "model.mat"
+    inputs = tmp_path / "inputs.csv"
+    output = tmp_path / "predictions.csv"
+    model.write_bytes(b"synthetic model fixture")
+    inputs.write_text("date,sales_lag_1\n2017-01-01,0.2\n", encoding="utf-8")
+    runner = MatlabBatchRunner(tmp_path)
+    expressions: list[str] = []
+    monkeypatch.setattr(runner, "_run", expressions.append)
+
+    runner.predict_saved_model(model, inputs, output, ["sales_lag_1"])
+
+    job = json.loads(output.with_suffix(".job.json").read_text(encoding="utf-8"))
+    assert job["schema_version"] == 1
+    assert job["feature_columns"] == ["sales_lag_1"]
+    assert Path(job["model_file"]) == model.resolve()
+    job_literal = output.with_suffix(".job.json").resolve().as_posix()
+    assert expressions == [f"adaptforecast.predictJob('{job_literal}')"]
