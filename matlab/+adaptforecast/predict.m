@@ -20,7 +20,7 @@ numSamples = height(inputTable);
 numRules = numel(model.Rules);
 activation = zeros(numSamples, numRules);
 for sampleIndex = 1:numSamples
-    [~, ~, ~, firing] = evalfis(model, X(sampleIndex, :), options);
+    [~, ~, ~, ~, firing] = evalfis(model, X(sampleIndex, :), options);
     if size(firing, 2) == 2
         activation(sampleIndex, :) = sqrt(firing(:, 1) .* firing(:, 2));
     else
@@ -31,4 +31,3 @@ ruleNames = "rule_" + (1:numRules);
 activationTable = array2table(activation, VariableNames=cellstr(ruleNames));
 activationTable = addvars(activationTable, inputTable.date, Before=1, NewVariableNames="date");
 end
-

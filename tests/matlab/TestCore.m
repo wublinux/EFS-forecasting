@@ -26,6 +26,8 @@ classdef TestCore < matlab.unittest.TestCase
             testCase.verifyEqual(activation.date, input.date);
             testCase.verifyEqual(string(activation.Properties.VariableNames(2:end)), ...
                 "rule_" + (1:numel(fis.Rules)));
+            testCase.verifyGreaterThan(max(std(activation{:, 2:end}, 0, 1)), 0, ...
+                "Rule activation must respond to changing inputs.");
         end
 
         function noRuleFiringIsHandledWithoutWarningOrShapeLoss(testCase)

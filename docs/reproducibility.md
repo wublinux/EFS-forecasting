@@ -22,6 +22,8 @@ adaptforecast benchmark --config configs/benchmark.yaml
 The resulting artifact directory is authoritative. Preserve its `manifest.json`, data SHA-256,
 configuration, per-category and macro summaries, weather-ablation tables, predictions, rules,
 activations, and model files together.
+The manifest status is `partial` whenever a configured model is unavailable; only runs with every
+configured model present are marked `complete`.
 
 ## Private data
 

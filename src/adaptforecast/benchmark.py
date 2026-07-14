@@ -284,7 +284,7 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest.update(
         {
-            "status": "complete",
+            "status": "partial" if unavailable else "complete",
             "categories_completed": categories,
             "metric_rows": len(metrics),
             "unavailable_models": len(unavailable),

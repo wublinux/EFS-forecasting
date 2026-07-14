@@ -27,4 +27,5 @@ artifacts/*
 !artifacts/.gitkeep
 site/
 ci-efs-cache/
+downloads/
 RPT_*.pdf
