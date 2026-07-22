@@ -11,7 +11,13 @@ import pandas as pd
 from .artifacts import create_run_directory, write_json, write_run_manifest, write_table
 from .baselines import OptionalDependencyError, arima_forecast, lstm_forecast, seasonal_naive
 from .config import BenchmarkConfig
-from .data import common_evaluation_dates, load_canonical, make_supervised, prepare_category
+from .data import (
+    common_evaluation_dates,
+    load_canonical,
+    make_supervised,
+    prepare_category,
+    resolve_data_path,
+)
 from .matlab_bridge import MatlabBatchRunner, MatlabUnavailableError
 from .metrics import evaluate_metrics, normalized_error_metrics
 from .plots import save_forecast_plots, save_rule_activation_plots
@@ -81,7 +87,7 @@ def _weather_ablation(metrics: pd.DataFrame) -> pd.DataFrame:
 
 def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") -> Path:
     root = Path(repository_root).resolve()
-    data_path = (root / config.data_path).resolve()
+    data_path = resolve_data_path(root / config.data_path).resolve()
     data = load_canonical(data_path)
     categories = (
         sorted(data["category"].unique().tolist())
