@@ -11,6 +11,15 @@ adaptforecast benchmark --config configs/benchmark.smoke.yaml
 The smoke profile uses one category, one seed, two GA generations, and five Pattern Search
 iterations. Its purpose is interface verification, not model comparison.
 
+On a host without MATLAB, run the independent Python IT2 contract instead:
+
+```bash
+adaptforecast benchmark --config configs/benchmark.python-it2.smoke.yaml
+```
+
+The two smoke runs are separate backend checks and should not be merged into one performance
+claim.
+
 ## Full audit
 
 Run the full configuration with MATLAB R2024b+ and the required toolboxes:
@@ -32,13 +41,16 @@ Do not copy unlicensed source data into this repository. Set `ADAPTFORECAST_DATA
 name in a local configuration. The manifest records its hash without publishing its records.
 `configs/benchmark.private.example.yaml` resolves the input through that environment variable and
 writes full-run artifacts to the repository's parent directory.
+Use `configs/benchmark.private.python-it2.example.yaml` for the independent Python IT2 full run.
+Its artifact has the same year split and metric protocol, but its EFS backend identity remains
+`python-it2` throughout the evidence tables.
 
 ## Continuous integration
 
 Python CI verifies conversion, leakage barriers, date alignment, metrics, artifact contracts,
-linting, and documentation. MATLAB CI uses a deliberately small synthetic training job. Full
-three-seed optimization remains an explicit local research run because it is computationally
-expensive.
+linting, documentation, and deterministic Python IT2 inference/training. MATLAB CI separately
+uses a deliberately small synthetic training job. Full three-seed optimization remains an
+explicit local research run because it is computationally expensive.
 
 The public runner uses a staged file contract because temporary MATLAB Actions licensing is
 available to the official runner action rather than arbitrary child processes. Python first

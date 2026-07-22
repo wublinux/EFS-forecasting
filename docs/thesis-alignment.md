@@ -11,7 +11,7 @@ prototype's methodological gaps.
 | Real weather as external information | Canonical target-date weather interface implemented |
 | Prototype-generated random weather | Removed |
 | Full-data normalization | Replaced by training-only preprocessing |
-| GA plus Pattern Search | Implemented explicitly in MATLAB |
+| GA plus Pattern Search | Implemented in MATLAB and independently in the labeled Python IT2 backend |
 | ARIMA/LSTM comparisons | Implemented as shared-split baselines |
 | Interpretable fuzzy rules and heat map | Exported as rule and activation artifacts |
 | Online model evolution | Not implemented; future work |
@@ -22,3 +22,6 @@ prototype's methodological gaps.
 The original PDF is intentionally not included in the public repository. This page is the public
 traceability record between its concepts and current executable evidence.
 
+The legacy prototype files are also not treated as reproduced evidence: they used combined-year
+normalization, synthetic weather, a non-independent split, and did not retain a completed fuzzy
+model artifact. They remain private historical material rather than inputs to published metrics.

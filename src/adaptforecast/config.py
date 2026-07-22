@@ -11,12 +11,15 @@ import yaml
 
 @dataclass
 class EFSConfig:
+    backend: str = "matlab"
     executable: str = "matlab"
     num_input_mfs: int = 2
     population_size: int = 100
     max_generations: int = 300
     crossover_fraction: float = 0.8
     pattern_max_iterations: int = 100
+    ga_stall_generations: int = 30
+    complexity_penalty: float = 0.002
     use_parallel: bool = True
 
 
@@ -47,6 +50,8 @@ def load_config(path: str | Path) -> BenchmarkConfig:
     config = BenchmarkConfig(**raw, efs=efs)
     if executable := os.getenv("ADAPTFORECAST_MATLAB_EXECUTABLE"):
         config.efs.executable = executable
+    if backend := os.getenv("ADAPTFORECAST_EFS_BACKEND"):
+        config.efs.backend = backend
     if config.profile == "smoke":
         config.seeds = config.seeds[:1]
         config.efs.population_size = min(config.efs.population_size, 10)
@@ -57,4 +62,16 @@ def load_config(path: str | Path) -> BenchmarkConfig:
         raise ValueError("lags must be a sorted, non-empty list of positive integers")
     if config.train_year == config.test_year:
         raise ValueError("train_year and test_year must differ")
+    if config.efs.backend not in {"matlab", "python-it2"}:
+        raise ValueError("efs.backend must be 'matlab' or 'python-it2'")
+    if config.efs.num_input_mfs < 2:
+        raise ValueError("efs.num_input_mfs must be at least 2")
+    if config.efs.population_size < 4 or config.efs.max_generations < 1:
+        raise ValueError("EFS GA requires population_size >= 4 and max_generations >= 1")
+    if not 0 <= config.efs.crossover_fraction <= 1:
+        raise ValueError("efs.crossover_fraction must be between 0 and 1")
+    if config.efs.pattern_max_iterations < 1 or config.efs.ga_stall_generations < 1:
+        raise ValueError("EFS iteration limits must be positive")
+    if config.efs.complexity_penalty < 0:
+        raise ValueError("efs.complexity_penalty must be non-negative")
     return config

@@ -10,6 +10,7 @@ models: [seasonal_naive, arima, lstm, efs]
 seasonal_period: 7
 profile: full
 efs:
+  backend: matlab
   executable: matlab
   num_input_mfs: 2
   population_size: 100

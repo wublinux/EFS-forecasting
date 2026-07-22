@@ -6,7 +6,7 @@ import pandas as pd
 
 from adaptforecast.artifacts import sha256_file
 from adaptforecast.benchmark import _weather_ablation, run_benchmark
-from adaptforecast.config import BenchmarkConfig
+from adaptforecast.config import BenchmarkConfig, EFSConfig
 
 
 def test_seasonal_naive_smoke_benchmark_writes_auditable_artifacts(tmp_path: Path) -> None:
@@ -75,3 +75,35 @@ def test_private_data_environment_path_is_used_for_manifest_hash(
 
     assert manifest["data_file"] == private_file.name
     assert manifest["data_sha256"] == sha256_file(private_file)
+
+
+def test_python_it2_smoke_benchmark_produces_both_weather_variants(
+    tmp_path: Path,
+) -> None:
+    root = Path(__file__).resolve().parents[2]
+    config = BenchmarkConfig(
+        data_path=str(root / "data/sample/synthetic_demand.csv"),
+        artifact_root=str(tmp_path),
+        categories=["ice cream"],
+        seeds=[42],
+        models=["efs"],
+        profile="smoke",
+        efs=EFSConfig(
+            backend="python-it2",
+            population_size=4,
+            max_generations=1,
+            pattern_max_iterations=1,
+            ga_stall_generations=1,
+            use_parallel=False,
+        ),
+    )
+
+    run_dir = run_benchmark(config, root)
+    metrics = pd.read_csv(run_dir / "metrics.csv")
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+
+    assert set(metrics["variant"]) == {"sales_only", "target_weather"}
+    assert set(metrics["backend"]) == {"python-it2"}
+    assert len(pd.read_csv(run_dir / "weather_ablation.csv")) == 1
+    assert manifest["status"] == "complete"
+    assert len(list((run_dir / "efs").glob("**/model.npz"))) == 2

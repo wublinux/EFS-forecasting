@@ -14,6 +14,7 @@ from .benchmark import run_benchmark
 from .config import load_config
 from .data import wide_to_long
 from .matlab_bridge import MatlabBatchRunner
+from .python_it2 import PythonIT2Runner
 from .schema import validate_dataframe
 
 app = typer.Typer(
@@ -68,14 +69,24 @@ def predict(
     input_path: Path = typer.Option(..., "--input", exists=True, readable=True),
     output_path: Path = typer.Option(Path("predictions.csv"), "--output"),
     features: str = typer.Option(..., help="Comma-separated normalized feature columns."),
+    backend: str = typer.Option("auto", help="Inference backend: auto, matlab, or python-it2."),
     matlab: str = typer.Option("matlab", help="MATLAB executable or absolute path."),
     repository_root: Path = typer.Option(Path("."), "--root"),
 ) -> None:
-    """Predict with a saved MATLAB EFS model and prepared normalized features."""
+    """Predict with a saved MATLAB or Python IT2 model and normalized features."""
     feature_columns = [value.strip() for value in features.split(",") if value.strip()]
     if not feature_columns:
         raise typer.BadParameter("At least one feature column is required")
-    runner = MatlabBatchRunner(repository_root, matlab)
+    if backend not in {"auto", "matlab", "python-it2"}:
+        raise typer.BadParameter("backend must be auto, matlab, or python-it2")
+    selected_backend = backend
+    if selected_backend == "auto":
+        selected_backend = "matlab" if model.suffix.lower() == ".mat" else "python-it2"
+    runner = (
+        PythonIT2Runner(repository_root)
+        if selected_backend == "python-it2"
+        else MatlabBatchRunner(repository_root, matlab)
+    )
     runner.predict_saved_model(model, input_path, output_path, feature_columns)
     typer.echo(str(output_path))
 

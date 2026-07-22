@@ -1,5 +1,5 @@
-data_path: data/sample/synthetic_demand.csv
-artifact_root: artifacts
+data_path: canonical-private.csv
+artifact_root: ../private-artifacts
 train_year: 2016
 test_year: 2017
 lags: [1, 2, 3]
@@ -10,11 +10,13 @@ models: [seasonal_naive, arima, lstm, efs]
 seasonal_period: 7
 profile: full
 efs:
-  backend: matlab
+  backend: python-it2
   executable: matlab
   num_input_mfs: 2
   population_size: 100
   max_generations: 300
   crossover_fraction: 0.8
   pattern_max_iterations: 100
-  use_parallel: true
+  ga_stall_generations: 30
+  complexity_penalty: 0.002
+  use_parallel: false

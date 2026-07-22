@@ -5,9 +5,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 AdaptForecast is an auditable research system for **next-day, category-level demand
-forecasting on small datasets**. Its MATLAB core learns an interval type-2 Sugeno fuzzy
-inference system (EFS), while Python provides leakage-safe data preparation, statistical and
-neural baselines, experiment artifacts, a CLI, and a local Streamlit interface.
+forecasting on small datasets**. Its reference MATLAB core learns an interval type-2 Sugeno
+fuzzy inference system (EFS). Python provides leakage-safe data preparation, statistical and
+neural baselines, experiment artifacts, a CLI, a local Streamlit interface, and an explicitly
+identified independent `python-it2` backend for hosts without MATLAB.
 
 The project originated from a final-year report on evolutionary fuzzy systems for supply-chain
 forecasting. This repository intentionally distinguishes the report's motivation from claims
@@ -41,8 +42,9 @@ Search tuning of type-2 lower scale and lag while upper parameters are fixed.
 - Fuzzy Logic Toolbox and Global Optimization Toolbox
 - Parallel Computing Toolbox is optional but recommended for the full profile
 
-MATLAB is not required to validate data, inspect artifacts, or run available Python baselines.
-The Streamlit app automatically becomes a results browser when MATLAB is unavailable.
+MATLAB is not required to validate data, inspect artifacts, run Python baselines, or train the
+independent Python IT2 backend. The MATLAB and Python IT2 implementations share the protocol but
+are not assumed to be numerically equivalent; every new metric row records its backend.
 Set `ADAPTFORECAST_MATLAB_EXECUTABLE` when MATLAB is installed outside the system `PATH`.
 The repository includes one explicitly labeled synthetic smoke snapshot so this browsing mode is
 useful immediately after a clean checkout.
@@ -63,6 +65,12 @@ adaptforecast app
 The smoke configuration deliberately reduces evolutionary optimization iterations. It verifies
 the pipeline; it is not research evidence. Run `configs/benchmark.yaml` for the three-seed full
 audit.
+
+Without MATLAB, run the separately identified Python IT2 smoke workflow:
+
+```bash
+adaptforecast benchmark --config configs/benchmark.python-it2.smoke.yaml
+```
 
 ### Private data
 
@@ -86,6 +94,10 @@ $env:ADAPTFORECAST_DATA_DIR = "C:\path\to\private-data"
 adaptforecast benchmark --config configs/benchmark.private.example.yaml
 ```
 
+For a complete three-seed run using the independent Python implementation instead, use
+`configs/benchmark.private.python-it2.example.yaml`. Do not combine its EFS metrics with MATLAB
+EFS metrics as if they came from the same implementation.
+
 See [data/README.md](data/README.md) for the canonical schema. Data is not licensed under the
 MIT software license.
 
@@ -95,13 +107,14 @@ MIT software license.
 adaptforecast validate-data INPUT.csv
 adaptforecast prepare INPUT.csv OUTPUT.csv
 adaptforecast benchmark --config configs/benchmark.yaml
-adaptforecast predict --model model.mat --input prepared.csv --features sales_lag_1,...
+adaptforecast predict --model model.mat|model.npz --input prepared.csv --features sales_lag_1,...
 adaptforecast app
 ```
 
 MATLAB exposes `adaptforecast.train`, `adaptforecast.predict`, `adaptforecast.evaluate`, and
 `adaptforecast.explain`. Python invokes them through `matlab -batch` and versioned JSON/CSV
-contracts, not MATLAB Engine.
+contracts, not MATLAB Engine. The independent Python backend uses the same file contract and
+exports a hash-verified `model.npz` plus human-readable `model.json` metadata.
 
 With MATLAB R2024b+ installed, a clean checkout can reproduce prediction from the checked-in
 synthetic sales-only smoke model:
@@ -117,13 +130,12 @@ adaptforecast predict \
 This example validates model loading and the file contract; it is not a performance claim.
 
 Each benchmark creates `artifacts/<run-id>/` with a manifest, data SHA-256, metrics,
-predictions, unavailable-model reasons, and EFS model/rule/activation files when MATLAB is
-available.
+predictions, unavailable-model reasons, backend identity, and EFS model/rule/activation files.
 
 ## Repository map
 
 ```text
-src/adaptforecast/    Python data, benchmark, CLI, bridge, and Streamlit code
+src/adaptforecast/    Python data, benchmark, IT2 backend, CLI, bridge, and Streamlit code
 matlab/+adaptforecast MATLAB interval type-2 EFS implementation
 configs/              Smoke and full experiment protocols
 data/sample/          Synthetic public demonstration data

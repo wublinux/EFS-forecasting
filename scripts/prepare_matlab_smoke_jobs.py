@@ -13,6 +13,8 @@ from adaptforecast.matlab_bridge import MatlabBatchRunner
 def prepare(config_path: Path, repository_root: Path, cache_root: Path) -> int:
     root = repository_root.resolve()
     config = load_config(config_path)
+    if config.efs.backend != "matlab":
+        raise ValueError("prepare_matlab_smoke_jobs requires efs.backend: matlab")
     data = load_canonical(root / config.data_path)
     categories = (
         sorted(data["category"].unique()) if config.categories == "all" else list(config.categories)

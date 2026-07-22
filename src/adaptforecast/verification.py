@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from .artifacts import sha256_file
+
 
 def verify_smoke_artifact(root: Path) -> Path:
     """Return the newest valid smoke run or raise on a missing contract element."""
@@ -36,10 +38,18 @@ def verify_smoke_artifact(root: Path) -> Path:
         raise RuntimeError(f"Unexpected EFS variants: {sorted(efs_variants)}")
 
     efs_root = run_dir / "efs"
-    required = ["model.mat", "predictions.csv", "rules.csv", "activations.csv"]
+    backend = manifest.get("config", {}).get("efs", {}).get("backend", "matlab")
+    model_files = ["model.json", "model.npz"] if backend == "python-it2" else ["model.mat"]
+    required = [*model_files, "predictions.csv", "rules.csv", "activations.csv"]
     for name in required:
         if not list(efs_root.glob(f"**/{name}")):
             raise RuntimeError(f"No EFS {name} was produced")
+    if backend == "python-it2":
+        for metadata_path in efs_root.glob("**/model.json"):
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            array_path = metadata_path.parent / str(metadata.get("array_file", ""))
+            if not array_path.exists() or sha256_file(array_path) != metadata.get("array_sha256"):
+                raise RuntimeError(f"Python IT2 model hash mismatch: {metadata_path}")
     for activation_path in efs_root.glob("**/activations.csv"):
         activation = pd.read_csv(activation_path).drop(columns=["date"], errors="ignore")
         values = activation.to_numpy(dtype=float)

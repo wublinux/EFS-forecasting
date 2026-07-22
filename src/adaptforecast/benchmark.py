@@ -21,6 +21,7 @@ from .data import (
 from .matlab_bridge import MatlabBatchRunner, MatlabUnavailableError
 from .metrics import evaluate_metrics, normalized_error_metrics
 from .plots import save_forecast_plots, save_rule_activation_plots
+from .python_it2 import PythonIT2Runner
 
 
 def _align(
@@ -40,6 +41,7 @@ def _metric_row(
     category: str,
     model: str,
     variant: str,
+    backend: str,
     seed: int | None,
     train_sales: np.ndarray,
     predicted_norm: np.ndarray,
@@ -56,6 +58,7 @@ def _metric_row(
         "category": category,
         "model": model,
         "variant": variant,
+        "backend": backend,
         "seed": seed,
         **metrics,
     }
@@ -65,13 +68,17 @@ METRIC_COLUMNS = ["rmse", "mae", "mase", "smape", "rmse_norm", "mae_norm"]
 
 
 def _weather_ablation(metrics: pd.DataFrame) -> pd.DataFrame:
-    efs = metrics.loc[metrics["model"] == "efs"]
+    efs = metrics.loc[metrics["model"] == "efs"].copy()
+    if "backend" not in efs:
+        efs["backend"] = "unspecified"
     sales_only = efs.loc[efs["variant"] == "sales_only"]
     weather = efs.loc[efs["variant"] == "target_weather"]
     paired = sales_only.merge(
-        weather, on=["category", "model", "seed"], suffixes=("_sales_only", "_target_weather")
+        weather,
+        on=["category", "model", "backend", "seed"],
+        suffixes=("_sales_only", "_target_weather"),
     )
-    result = paired[["category", "seed"]].copy()
+    result = paired[["category", "backend", "seed"]].copy()
     for metric in METRIC_COLUMNS:
         sales_column = f"{metric}_sales_only"
         weather_column = f"{metric}_target_weather"
@@ -96,7 +103,11 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
     )
     run_dir = create_run_directory(root / config.artifact_root)
     write_run_manifest(run_dir, config=config.to_dict(), data_path=data_path)
-    runner = MatlabBatchRunner(root, config.efs.executable)
+    runner = (
+        PythonIT2Runner(root)
+        if config.efs.backend == "python-it2"
+        else MatlabBatchRunner(root, config.efs.executable)
+    )
 
     metric_rows: list[dict[str, object]] = []
     prediction_rows: list[dict[str, object]] = []
@@ -121,6 +132,7 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
             aligned: pd.DataFrame,
             model: str,
             variant: str,
+            backend: str,
             seed: int | None,
             predicted_norm: np.ndarray,
             category: str = category,
@@ -132,6 +144,7 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
                     category=category,
                     model=model,
                     variant=variant,
+                    backend=backend,
                     seed=seed,
                     train_sales=train_sales,
                     predicted_norm=predicted_norm,
@@ -144,6 +157,7 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
                         "category": category,
                         "model": model,
                         "variant": variant,
+                        "backend": backend,
                         "seed": seed,
                         "date": row["date"],
                         "actual": row["target"],
@@ -157,16 +171,23 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
             forecast = seasonal_naive(prepared.test, config.seasonal_period)
             aligned = _align(forecast.dates, forecast.values, test_plain, common_dates)
             pred_norm = prepared.scales["sales"].transform(aligned["predicted"])
-            record(aligned, "seasonal_naive", "sales_only", None, pred_norm)
+            record(aligned, "seasonal_naive", "sales_only", "python", None, pred_norm)
 
         if "arima" in config.models:
             try:
                 forecast = arima_forecast(prepared.train, prepared.test, config.profile)
                 aligned = _align(forecast.dates, forecast.values, test_plain, common_dates)
                 pred_norm = prepared.scales["sales"].transform(aligned["predicted"])
-                record(aligned, "arima", "sales_only", None, pred_norm)
+                record(aligned, "arima", "sales_only", "python", None, pred_norm)
             except (OptionalDependencyError, RuntimeError) as exc:
-                unavailable.append({"category": category, "model": "arima", "reason": str(exc)})
+                unavailable.append(
+                    {
+                        "category": category,
+                        "model": "arima",
+                        "backend": "python",
+                        "reason": str(exc),
+                    }
+                )
 
         if "lstm" in config.models:
             features = [f"sales_lag_{lag}" for lag in reversed(config.lags)]
@@ -183,9 +204,16 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
                     aligned = _align(forecast.dates, predicted_original, test_plain, common_dates)
                     normalized_map = pd.Series(forecast.values, index=forecast.dates)
                     pred_norm = normalized_map.reindex(aligned["date"]).to_numpy()
-                    record(aligned, "lstm", "sales_only", seed, pred_norm)
+                    record(aligned, "lstm", "sales_only", "python", seed, pred_norm)
                 except (OptionalDependencyError, RuntimeError) as exc:
-                    unavailable.append({"category": category, "model": "lstm", "reason": str(exc)})
+                    unavailable.append(
+                        {
+                            "category": category,
+                            "model": "lstm",
+                            "backend": "python",
+                            "reason": str(exc),
+                        }
+                    )
                     break
 
         if "efs" in config.models:
@@ -228,7 +256,12 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
                         )
                     except (MatlabUnavailableError, RuntimeError) as exc:
                         unavailable.append(
-                            {"category": category, "model": f"efs:{variant}", "reason": str(exc)}
+                            {
+                                "category": category,
+                                "model": f"efs:{variant}",
+                                "backend": config.efs.backend,
+                                "reason": str(exc),
+                            }
                         )
                         break
                     predicted_original = prepared.scales["sales"].inverse(result["prediction_norm"])
@@ -242,7 +275,7 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
                         result["prediction_norm"].to_numpy(), index=pd.DatetimeIndex(result["date"])
                     )
                     pred_norm = normalized_map.reindex(aligned["date"]).to_numpy()
-                    record(aligned, "efs", variant, seed, pred_norm)
+                    record(aligned, "efs", variant, config.efs.backend, seed, pred_norm)
 
     metrics = pd.DataFrame(metric_rows)
     predictions = pd.DataFrame(prediction_rows)
@@ -250,11 +283,13 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
     write_table(run_dir / "predictions.csv", predictions)
     write_table(
         run_dir / "unavailable.csv",
-        pd.DataFrame(unavailable, columns=["category", "model", "reason"]),
+        pd.DataFrame(unavailable, columns=["category", "model", "backend", "reason"]),
     )
     if not metrics.empty:
         category_summary = (
-            metrics.groupby(["category", "model", "variant"], dropna=False)[METRIC_COLUMNS]
+            metrics.groupby(["category", "model", "variant", "backend"], dropna=False)[
+                METRIC_COLUMNS
+            ]
             .agg(["mean", "std"])
             .reset_index()
         )
@@ -264,11 +299,11 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
         ]
         write_table(run_dir / "category_summary.csv", category_summary)
         macro = (
-            metrics.groupby(["model", "variant", "seed"], dropna=False)[METRIC_COLUMNS]
+            metrics.groupby(["model", "variant", "backend", "seed"], dropna=False)[METRIC_COLUMNS]
             .mean()
             .reset_index()
         )
-        summary = macro.groupby(["model", "variant"], dropna=False)[METRIC_COLUMNS].agg(
+        summary = macro.groupby(["model", "variant", "backend"], dropna=False)[METRIC_COLUMNS].agg(
             ["mean", "std"]
         )
         summary.columns = [f"{name}_{stat}" for name, stat in summary.columns]
@@ -278,7 +313,9 @@ def run_benchmark(config: BenchmarkConfig, repository_root: str | Path = ".") ->
         write_table(run_dir / "weather_ablation.csv", ablation)
         if not ablation.empty:
             ablation_summary = (
-                ablation.drop(columns=["category", "seed"]).agg(["mean", "std"]).transpose()
+                ablation.drop(columns=["category", "backend", "seed"])
+                .agg(["mean", "std"])
+                .transpose()
             )
             ablation_summary.index.name = "measure"
             write_table(run_dir / "weather_ablation_summary.csv", ablation_summary.reset_index())

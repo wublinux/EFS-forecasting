@@ -38,7 +38,12 @@ def show_run(manifest_path: Path) -> None:
         if not predictions.empty:
             category = st.selectbox("Category", sorted(predictions["category"].unique()))
             selected = predictions.loc[predictions["category"] == category].copy()
-            selected["series"] = selected["model"] + ":" + selected["variant"]
+            backend = (
+                selected["backend"]
+                if "backend" in selected
+                else pd.Series("unspecified", index=selected.index)
+            )
+            selected["series"] = selected["model"] + ":" + selected["variant"] + ":" + backend
             chart = selected.pivot_table(index="date", columns="series", values="predicted")
             actual = selected.groupby("date")["actual"].first().rename("actual")
             st.line_chart(pd.concat([actual, chart], axis=1))
@@ -60,9 +65,12 @@ def main() -> None:
     )
     matlab_ready = shutil.which("matlab") is not None
     if matlab_ready:
-        st.success("MATLAB detected: EFS training can be launched locally.")
+        st.success("MATLAB detected: MATLAB and Python IT2 training are available.")
     else:
-        st.info("MATLAB was not detected. The app is in precomputed-results browsing mode.")
+        st.info(
+            "MATLAB was not detected. Audited results can still be browsed, and the "
+            "explicit Python IT2 backend can be trained locally."
+        )
 
     with st.sidebar:
         st.header("Data validation")
@@ -91,21 +99,32 @@ def main() -> None:
         st.caption("This dataset is synthetic and is not derived from the private Walmart data.")
     with tabs[2]:
         profile = st.radio("Profile", ["smoke", "full"], horizontal=True)
+        backend_options = ["python-it2"]
+        if matlab_ready:
+            backend_options.insert(0, "matlab")
+        backend = st.radio("EFS backend", backend_options, horizontal=True)
         sample_categories = sorted(
             load_canonical(ROOT / "data" / "sample" / "synthetic_demand.csv")["category"].unique()
         )
         run_category = st.selectbox("Training category", sample_categories)
         st.write(
             "Training is intentionally explicit and writes a complete artifact directory. "
-            "Full EFS training requires MATLAB R2024b+, Fuzzy Logic Toolbox, Global "
-            "Optimization Toolbox, and optionally Parallel Computing Toolbox."
+            "The MATLAB and Python IT2 implementations share the experiment protocol but "
+            "are separate backends and are identified in every new metric row. Full MATLAB "
+            "training requires R2024b and the documented toolboxes."
         )
-        if st.button("Run benchmark", disabled=not matlab_ready):
+        if st.button("Run benchmark"):
             from adaptforecast.benchmark import run_benchmark
 
-            config_name = "benchmark.smoke.yaml" if profile == "smoke" else "benchmark.yaml"
+            if backend == "python-it2" and profile == "smoke":
+                config_name = "benchmark.python-it2.smoke.yaml"
+            else:
+                config_name = "benchmark.smoke.yaml" if profile == "smoke" else "benchmark.yaml"
             config = load_config(ROOT / "configs" / config_name)
             config.categories = [run_category]
+            config.efs.backend = backend
+            if backend == "python-it2":
+                config.efs.use_parallel = False
             with st.status("Running audited benchmark...", expanded=True):
                 run_dir = run_benchmark(config, ROOT)
             st.success(f"Completed: {run_dir}")

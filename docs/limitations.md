@@ -8,8 +8,11 @@
   cannot establish a causal effect.
 - Rule count grows exponentially with input count. The six-input weather model permits up to 64
   rules even with only two membership functions per input.
-- EFS training depends on licensed MATLAB toolboxes and is substantially slower than simple
-  statistical baselines.
+- The reference EFS training path depends on licensed MATLAB toolboxes. The independent Python
+  IT2 backend removes that runtime dependency but is not a claim of numerical equivalence to
+  MathWorks' interval type-2 implementation.
+- Both EFS backends can be substantially slower than simple statistical baselines in the full
+  three-seed optimization profile.
 - LSTM estimates are unstable on very small datasets; multiple seeds and uncertainty summaries
   are required.
 - The current system retrains in batches. It does not yet evolve online, consume live streams,

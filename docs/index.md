@@ -17,6 +17,6 @@ hash used.
 5. Evaluate all models on the same dates and original scale.
 6. Export predictions, metrics, fuzzy rules, and activation intensities.
 
-The local Streamlit interface can run the pipeline when MATLAB is installed and can browse
-precomputed artifacts without MATLAB.
-
+The local Streamlit interface can run either the reference MATLAB backend or the separately
+identified Python IT2 backend, and can browse precomputed artifacts without either training
+environment.

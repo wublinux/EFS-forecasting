@@ -21,14 +21,23 @@ def save_forecast_plots(predictions: pd.DataFrame, output_dir: Path) -> None:
     import matplotlib.pyplot as plt
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    predictions = predictions.copy()
+    if "backend" not in predictions:
+        predictions["backend"] = "unspecified"
     for category, group in predictions.groupby("category"):
         figure, axis = plt.subplots(figsize=(10, 5))
         actual = group.groupby("date")["actual"].first().sort_index()
         axis.plot(actual.index, actual.values, color="black", linewidth=2, label="actual")
-        averaged = group.groupby(["date", "model", "variant"])["predicted"].mean().reset_index()
-        for (model, variant), line in averaged.groupby(["model", "variant"]):
+        averaged = (
+            group.groupby(["date", "model", "variant", "backend"])["predicted"].mean().reset_index()
+        )
+        for (model, variant, backend), line in averaged.groupby(["model", "variant", "backend"]):
             line = line.sort_values("date")
-            axis.plot(line["date"], line["predicted"], label=f"{model}:{variant}")
+            axis.plot(
+                line["date"],
+                line["predicted"],
+                label=f"{model}:{variant}:{backend}",
+            )
         axis.set_title(f"Next-day demand forecast - {category}")
         axis.set_xlabel("Target date")
         axis.set_ylabel("Sales")
